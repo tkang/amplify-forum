@@ -201,7 +201,7 @@ amplify 프로젝트를 초기화 해봅시다.
 ```sh
 $ amplify init
 
-- Enter a name for the project: amplifygraphqlschemas
+- Enter a name for the project: amplifyforum
 - Enter a name for the environment: dev
 - Choose your default editor: Visual Studio Code (or your default editor)
 - Please choose the type of app that youre building: javascript
