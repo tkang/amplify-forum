@@ -768,7 +768,7 @@ function Home() {
 + async function fetchTopics() {
 +   try {
 +     const data = await API.graphql({ query: queries.listTopics });
-+     setPosts(data.data.listTopics.items);
++     setTopics(data.data.listTopics.items);
 +   } catch (err) {
 +     console.log({ err });
 +   }
