@@ -1,0 +1,44 @@
+type Topic
+  @model
+  @auth(
+    rules: [
+      { allow: owner }
+      {
+        allow: groups
+        groups: ["Moderator"]
+        operations: [read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  title: String!
+  comments: [Comment] @connection(keyName: "topicComments", fields: ["id"])
+}
+
+type Comment
+  @model
+  @key(name: "topicComments", fields: ["topicId", "content"])
+  @auth(
+    rules: [
+      { allow: owner }
+      {
+        allow: groups
+        groups: ["Moderator"]
+        operations: [read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  topicId: ID!
+  content: String!
+  topic: Topic @connection(fields: ["topicId"])
+}
+
+type Subscription {
+  onCreateCommentByTopicId(topicId: String!): Comment
+    @aws_subscribe(mutations: ["createComment"])
+  onDeleteCommentByTopicId(topicId: String!): Comment
+    @aws_subscribe(mutations: ["deleteComment"])
+}

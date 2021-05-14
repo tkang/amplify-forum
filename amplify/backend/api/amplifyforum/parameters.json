@@ -1,0 +1,11 @@
+{
+  "AppSyncApiName": "amplifyforum",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false,
+  "AuthCognitoUserPoolId": {
+    "Fn::GetAtt": [
+      "authamplifyforum4e372c6f",
+      "Outputs.UserPoolId"
+    ]
+  }
+}
