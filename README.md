@@ -1165,7 +1165,7 @@ export default TopicPage;
 yarn dev
 ```
 
-### Filtered Subscription 추가
+## Filtered Subscription 추가
 
 이번에도 역시 새로운 데이터가 (Comment) 추가될때 화면이 업데이트 될수 있도록 Subscription 을 추가하도록 하겠습니다. 하지만 이번에는 TopicId 와 관련된 Comment 들만 업데이트 받도록 해보겠습니다.
 
