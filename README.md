@@ -918,20 +918,16 @@ import * as mutations from "../src/graphql/mutations";
 
 /* 이전과 동일 */
 
-useEffect(() => {
-  checkUser();
-  fetchTopics();
-+ const subscription = subscribeToOnCreateTopic();
-+   return () => {
-+     subscription.unsubscribe();
-+   };
-  }, []);
-
-/* 이전과 동일 */
-
 function Home() {
   /* 이전과 동일 */
-
+  useEffect(() => {
+    checkUser();
+    fetchTopics();
++   const subscription = subscribeToOnCreateTopic();
++     return () => {
++       subscription.unsubscribe();
++     };
+  }, []);
 + function subscribeToOnCreateTopic() {
 +   const subscription = API.graphql({
 +     query: subscriptions.onCreateTopic,
