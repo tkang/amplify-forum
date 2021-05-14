@@ -2,34 +2,13 @@
 
 본 워크샾에서는, [Amplify](https://docs.amplify.aws/), [Next.js](https://nextjs.org/), [GraphQL](https://graphql.org/) 을 이용하여 AWS 위에 full-stack serverless application 을 만들어 보려합니다. 우리가 만들 application 은 메시지 포럼 입니다.
 
-## Features
-
-구현할 기능들은 다음과 같습니다.
-
-- 어플리케이션 호스팅
-- 사용자 등록, 로그인
-- 여러개의 Topic 이 있으며, 한개의 Topic 밑으로 다수의 Comment 들이 등록될수 있음
-- 로그인된 사용자는 Topic 과 Comment를 생성하고 관리 가능 (Create, Read, Update, Delete) 단 본인이 생성한 데이터만 Update, Delete 가능함.
-- Moderator 로 등록된 사용자들은 모든 Topic 과 Comment 를 관리 가능 (Read, Update, Delete)
-- 로그인된 사용자들은 모든 Topic 과 Comment 를 읽을수 있음.
-
-### Overview
+## Overview
 
 [Create Next App](https://nextjs.org/docs/api-reference/create-next-app) 을 이용하여 새로운 next.js 프로젝트를 생성합니다. 그리고 [Amplify CLI](https://github.com/aws-amplify/amplify-cli) 를 이용하여 AWS Cloud 환경을 설정하고 [Amplify JS Libraries](https://github.com/aws-amplify/amplify-js) 를 이용하여 우리가 만든 next.js 앱을 AWS Cloud 와 연결해보려 합니다.
 
 본 워크샾은 2~5시간 정도 걸릴것으로 예상됩니다.
 
 [Demo](https://dev.d2lf8ywg8xsqzo.amplifyapp.com)
-
-### 개발 환경 Environment
-
-시작하기전에, 아래 패키지들을 설치해주세요.
-
-- Node.js v10.x or later
-- npm v5.x or later
-- git v2.14.1 or later
-
-터미널에서 [Bash shell](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)>) 상에서 Amplify CLI 를 실행해서 infra를 생성하고, Next.js application 을 로컬에서 띄우고 브라우져 상에서 테스트 하려 합니다.
 
 ### Required Background / Level
 
@@ -43,20 +22,45 @@ React 와 GraphQL 에대한 지식이 있다면 도움이 되지만, 필수는 �
 - Web application Hosting (호스팅)
 - Authentication (인증)
 - GraphQL API : query, mutation, subscription, filtered subscription
+- Authorization
 - Deleting the resources (작업 후 리소스 삭제)
+
+### Features
+
+구현할 기능들은 다음과 같습니다.
+
+- 어플리케이션 호스팅
+- 사용자 등록, 로그인
+- 여러개의 Topic 이 있으며, 한개의 Topic 밑으로 다수의 Comment 들이 등록될수 있음
+- 로그인된 사용자는 Topic 과 Comment를 생성하고 관리 가능 (Create, Read, Update, Delete) 단 본인이 생성한 데이터만 Update, Delete 가능함.
+- Moderator 로 등록된 사용자들은 모든 Topic 과 Comment 를 관리 가능 (Read, Update, Delete)
+- 로그인된 사용자들은 모든 Topic 과 Comment 를 읽을수 있음.
+
+
+## 개발 환경 Environment
+
+시작하기전에, 아래 패키지들을 설치해주세요.
+
+- Node.js v10.x or later
+- npm v5.x or later
+- git v2.14.1 or later
+
+터미널에서 [Bash shell](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)>) 상에서 Amplify CLI 를 실행해서 infra를 생성하고, Next.js application 을 로컬에서 띄우고 브라우져 상에서 테스트 하려 합니다.
+
+
 
 ## 시작하기 - Next Application 생성
 
 [Create Next App](https://nextjs.org/docs/api-reference/create-next-app) 을 이용하여 새로운 프로젝트를 생성해봅시다.
 
 ```sh
-$ npx create-next-app amplify-graphql-schemas
+$ npx create-next-app amplify-forum
 ```
 
 생성된 디렉토리로 이동해서, aws-amplify 연관 패키지들을 설치해봅시다.
 
 ```sh
-$ cd amplify-graphql-schemas
+$ cd amplify-forum
 $ yarn add aws-amplify @aws-amplify/ui-react
 ```
 
