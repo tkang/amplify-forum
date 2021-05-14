@@ -234,7 +234,7 @@ amplify 프로젝트 상태를 Amplify console 로 확인하고 싶다면, `ampl
 $ amplify console
 ```
 
-## Configuring the Next applicaion with Amplify
+### Configuring the Next applicaion with Amplify
 
 API 가 생성되고 준비되었으니, app 을 통해 테스트 해봅시다.
 
@@ -400,78 +400,6 @@ SignOut 버튼을 눌러서 로그아웃이 잘 되는지도 확인해보세요.
 ```
 
 브라우져 콘솔을 열고 / 페이지를 로딩하면, 콘솔에 로그인된 사용자 정보들과 attributes 들이 출력되는걸 확인할수 있습니다.
-
-## Adding an AWS AppSync GraphQL API
-
-GraphQL API 를 추가하기 위해선, 다음 명령어를 실행합니다.
-
-```sh
-$ amplify add api
-
-? Please select from one of the below mentioned services: GraphQL
-? Provide API name: amplifyforum
-? Choose the default authorization type for the API Amazon Cognito User Pool
-Use a Cognito user pool configured as a part of this project.
-? Do you want to configure advanced settings for the GraphQL API No, I am done.
-? Do you have an annotated GraphQL schema? No
-? Choose a schema template: Single object with fields (e.g., “Todo” with ID, name, description)
-```
-
-> 기본 인증 방식은 Cognito UserPool (로그인 사용자) 입니다.
-
-## Topic & Comment 모델 추가
-
-- 로그인된 사용자 (owner) 는 Topic 과 Comment CRUD 가능
-- Moderator group 은 Topic 과 Comment Read/Update/Delete 가능
-- 나머지 로그인 사용자들은 Topic 과 Comment Read 가능
-
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다.
-
-```graphql
-type Topic
-  @model
-  @auth(
-    rules: [
-      { allow: owner }
-      {
-        allow: groups
-        groups: ["Moderator"]
-        operations: [read, update, delete]
-      }
-      { allow: private, operations: [read] }
-    ]
-  ) {
-  id: ID!
-  title: String!
-  comments: [Comment] @connection(keyName: "topicComments", fields: ["id"])
-}
-
-type Comment
-  @model
-  @key(name: "topicComments", fields: ["topicId", "content"])
-  @auth(
-    rules: [
-      { allow: owner }
-      {
-        allow: groups
-        groups: ["Moderator"]
-        operations: [read, update, delete]
-      }
-      { allow: private, operations: [read] }
-    ]
-  ) {
-  id: ID!
-  topicId: ID!
-  content: String!
-  topic: Topic @connection(fields: ["topicId"])
-}
-```
-
-변경 사항 적용을 위해 `amplify push --y` 명령어를 실행합니다.
-
-```sh
-$ amplify push --y
-```
 
 ## Implementing UI
 
@@ -722,6 +650,80 @@ export default withAuthenticator(Home);
 ```sh
 yarn dev
 ```
+
+
+## Adding an AWS AppSync GraphQL API
+
+GraphQL API 를 추가하기 위해선, 다음 명령어를 실행합니다.
+
+```sh
+$ amplify add api
+
+? Please select from one of the below mentioned services: GraphQL
+? Provide API name: amplifyforum
+? Choose the default authorization type for the API Amazon Cognito User Pool
+Use a Cognito user pool configured as a part of this project.
+? Do you want to configure advanced settings for the GraphQL API No, I am done.
+? Do you have an annotated GraphQL schema? No
+? Choose a schema template: Single object with fields (e.g., “Todo” with ID, name, description)
+```
+
+> 기본 인증 방식은 Cognito UserPool (로그인 사용자) 입니다.
+
+## Topic & Comment 모델 추가
+
+- 로그인된 사용자 (owner) 는 Topic 과 Comment CRUD 가능
+- Moderator group 은 Topic 과 Comment Read/Update/Delete 가능
+- 나머지 로그인 사용자들은 Topic 과 Comment Read 가능
+
+**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다.
+
+```graphql
+type Topic
+  @model
+  @auth(
+    rules: [
+      { allow: owner }
+      {
+        allow: groups
+        groups: ["Moderator"]
+        operations: [read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  title: String!
+  comments: [Comment] @connection(keyName: "topicComments", fields: ["id"])
+}
+
+type Comment
+  @model
+  @key(name: "topicComments", fields: ["topicId", "content"])
+  @auth(
+    rules: [
+      { allow: owner }
+      {
+        allow: groups
+        groups: ["Moderator"]
+        operations: [read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  topicId: ID!
+  content: String!
+  topic: Topic @connection(fields: ["topicId"])
+}
+```
+
+변경 사항 적용을 위해 `amplify push --y` 명령어를 실행합니다.
+
+```sh
+$ amplify push --y
+```
+
 
 ## GraphQL API 와 연결
 
