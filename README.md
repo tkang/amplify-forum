@@ -387,16 +387,22 @@ SignOut 버튼을 눌러서 로그아웃이 잘 되는지도 확인해보세요.
 + import { useEffect } from "react";
 + import { Auth } from "aws-amplify";
 
-
+function Home() {
 + useEffect(() => {
 + checkUser(); // new function call
 + }, []);
++
++ async function checkUser() {
++   const user = await Auth.currentAuthenticatedUser();
++   console.log("user: ", user);
++   console.log("user attributes: ", user.attributes);
++ }
+ 
+  /* 이전과 동일 */
+}
 
-+async function checkUser() {
-+  const user = await Auth.currentAuthenticatedUser();
-+  console.log("user: ", user);
-+  console.log("user attributes: ", user.attributes);
-+}
+
+
 ```
 
 브라우져 콘솔을 열고 / 페이지를 로딩하면, 콘솔에 로그인된 사용자 정보들과 attributes 들이 출력되는걸 확인할수 있습니다.
