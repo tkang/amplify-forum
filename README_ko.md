@@ -238,7 +238,7 @@ $ amplify console
 
 ### Configuring the Next applicaion with Amplify
 
-API 가 생성되고 준비되었으니, app 을 통해 테스트 해봅시다.
+Amplify 프로젝트가 생성되고 준비되었으니, app 을 통해 테스트 해봅시다.
 
 우선 해야할일은, 우리가 만들고 있는 app 에서 Amplify project 에 대해 인식하도록 설정하는 것입니다. src 폴더 안에 자동생성된 `aws-exports.js` 파일을 참조하도록 추가해봅시다.
 
@@ -305,7 +305,7 @@ $ amplify publish
 
 다음과정은, authentication을 추가를 해보겠습니다.
 
-authentication 추가를 위해, 다음 명령어를 실행합니다.
+authentication 추가를 위해, `amplify add auth` 명령어를 실행합니다.
 
 ```sh
 $ amplify add auth
@@ -315,7 +315,7 @@ $ amplify add auth
 ? Do you want to configure advanced settings? No, I am done.
 ```
 
-authentication 적용을 위해 `amplify push` 명령어를 실행합니다.
+변경사항 적용을 위해 `amplify push` 명령어를 실행합니다.
 
 ```sh
 $ amplify push
@@ -383,7 +383,7 @@ SignOut 버튼을 눌러서 로그아웃이 잘 되는지도 확인해보세요.
 
 로그인 상태에서 `Auth.currentAuthenticatedUser()` 로 사용자 정보를 가져올수 있습니다.
 
-**pages/index.js** 파일을 변경해봅시다.
+사용자 정보 확인을 위해 **pages/index.js** 파일을 변경해봅시다.
 
 ```diff
 + import { useEffect } from "react";
