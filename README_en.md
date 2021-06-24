@@ -1,62 +1,95 @@
 # Build a Reddit-like Forum with Next.js and Amplify
 
+[한국어](README_ko.md)
+
 ![AmplifyForum](https://github.com/tkang/amplify-forum/blob/main/Amplify_Forum.jpg?raw=true)
 
-본 워크샾에서는, [Amplify](https://docs.amplify.aws/), [Next.js](https://nextjs.org/), [GraphQL](https://graphql.org/) 을 이용하여 AWS 위에 full-stack serverless application 을 만들어 보려합니다. 우리가 만들 application 은 메시지 포럼 입니다.
+This hands-on lab will build a full-stack serverless application on AWS using Amplify, Next.js, GraphQL
+
+Application we will build is going to be a Reddit-like message forum.
+
+Once users follow this guide, they will have a working application running on AWS.
 
 ## Overview
 
-[Create Next App](https://nextjs.org/docs/api-reference/create-next-app) 을 이용하여 새로운 next.js 프로젝트를 생성합니다. 그리고 [Amplify CLI](https://github.com/aws-amplify/amplify-cli) 를 이용하여 AWS Cloud 환경을 설정하고 [Amplify JS Libraries](https://github.com/aws-amplify/amplify-js) 를 이용하여 우리가 만든 next.js 앱을 AWS Cloud 와 연결해보려 합니다.
+We will create a new project using Create Next App.
 
-본 워크샾은 2~5시간 정도 걸릴것으로 예상됩니다.
+We will then use Amplify CLI to set up AWS Cloud environment and use Amplify JS Libraries to connect our Next.js app to our back-end on AWS Cloud
+
+This project will be a fully-serverless application with following architecture.
+
+
+
+This hands-on lab is expected to be done in 2 to 4 hours
 
 [Demo](https://dev.d2lf8ywg8xsqzo.amplifyapp.com)
 
+### Architecture
+
+This guide will build a fully-serverless application with following architecture.
+
+![Architecture](https://github.com/tkang/amplify-forum/blob/main/amplify-architecture.png?raw=true)
+
 ### Required Background / Level
 
-본 워크샾은 full stack serverless 개발에 대해 알고 싶은 front-end 와 back-end 개발자들을 위해 만들어졌습니다.
+This guide has been made for front-end and back-end developers who want to learn more about building a full-stack serverless application on AWS.
 
-React 와 GraphQL 에대한 지식이 있다면 도움이 되지만, 필수는 아닙니다.
+Having knowledge in React and GraphQL is helpful, but not necessary.
 
-### 본 가이드에서 다루어질 토픽들:
+### Topics we will cover
 
 - Next.js application
-- Web application Hosting (호스팅)
-- Authentication (인증)
+- Web application Hosting
+- Authentication
 - GraphQL API : query, mutation, subscription, filtered subscription
 - Authorization
-- Deleting the resources (작업 후 리소스 삭제)
+- Deleting the resources
 
-### Features
+### Features we will implement
 
-구현할 기능들은 다음과 같습니다.
+1. Application hosting
+2. Authentication : Sign Up, Login, Signout
+3. Data Modeling
+- There can be N Topics
+- A Topic can have N Comments.
+4. Authorization
+- Authenticated (Logged-in) users can create, read, update, delete a
+  Topic and Comment. They can only update and delete their own.
+- Users in Moderator group can read, update, and delete Topics and
+  Comments.
+- Authenticated (Logged-in) users can read all Topics and Comments.
+5. Application UI
+- List Topics
+- View Topics with Comments
+6. Add and delete records (Topic, Comment)
+7. Realtime updates with Subscription
 
-- 어플리케이션 호스팅
-- 사용자 등록, 로그인
-- 여러개의 Topic 이 있으며, 한개의 Topic 밑으로 다수의 Comment 들이 등록될수 있음
-- 로그인된 사용자는 Topic 과 Comment를 생성하고 관리 가능 (Create, Read, Update, Delete) 단 본인이 생성한 데이터만 Update, Delete 가능함.
-- Moderator 로 등록된 사용자들은 모든 Topic 과 Comment 를 관리 가능 (Read, Update, Delete)
-- 로그인된 사용자들은 모든 Topic 과 Comment 를 읽을수 있음.
+### Development Environment
 
-## 개발 환경 Environment
-
-시작하기전에, 아래 패키지들을 설치해주세요.
+Before we start, please install
 
 - Node.js v10.x or later
 - npm v5.x or later
 - git v2.14.1 or later
 
-터미널에서 [Bash shell](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)>) 상에서 Amplify CLI 를 실행해서 infra를 생성하고, Next.js application 을 로컬에서 띄우고 브라우져 상에서 테스트 하려 합니다.
+On a terminal, we will run Amplify CLI to create a infrastructure, start
+Next.js application on a local machine, and test application on a
+browser.
 
-## 시작하기 - Next Application 생성
+### AWS Account
 
-[Create Next App](https://nextjs.org/docs/api-reference/create-next-app) 을 이용하여 새로운 프로젝트를 생성해봅시다.
+If you don't have an AWS account and would like to create and activate an AWS account, please refer to the following
+[link](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/).
+
+### Create a Next.js application
+
+Let's create a new project using [Create Next App](https://nextjs.org/docs/api-reference/create-next-app)
 
 ```sh
 $ npx create-next-app amplify-forum
 ```
 
-생성된 디렉토리로 이동해서, aws-amplify 연관 패키지들을 설치해봅시다.
+move into the `amplify-forum` directory and install aws-amplify related packages.
 
 ```sh
 $ cd amplify-forum
@@ -65,21 +98,22 @@ $ yarn add aws-amplify @aws-amplify/ui-react
 
 ### Styling with TailwindCSS
 
-본 앱에서는 TailwindCSS 를 이용하여 스타일링을 해보려 합니다.
+We will use TailwindCSS to style application.
 
-Tailwind CSS 관련 패키지를 설치합시다. devDependencies 에만 들어가도록 설치합니다.
+Let's install TailwindCSS related packages in devDependencies.
 
 ```sh
 $ yarn add --dev tailwindcss@latest postcss@latest autoprefixer@latest @tailwindcss/forms
 ```
 
-Tailwind 관련 설정 파일들 (`tailwind.config.js` `postcss.config.js`) 생성을 위해 다음 명령어를 실행합니다.
+To create Tailwind config files (`tailwind.config.js` `postcss.config.js`), let's run the following.
 
 ```sh
 $ npx tailwindcss init -p
 ```
 
-`tailwind.config.js` 의 내용을 다음과 같이 변경합니다. (production builds 에서 사용되지 않는 스타일링을 tree-shake 하기 위해서입니다.)
+Now, let's update `tailwind.config.js` as following.
+> This is to do tree-shake unused styling in production build
 
 ```diff
 // tailwind.config.js
@@ -98,7 +132,7 @@ module.exports = {
 }
 ```
 
-Tailwind 의 base, component, utilties 스타일이 사용되도록 next.js 에서 생성된 `./styles/globals.css` 파일을 다음과 같이 변경합니다.
+To use Tailwind's base, component, and utilities style, Let's update `./styles/globals.css`
 
 ```
 /* ./styles/globals.css */
@@ -107,9 +141,9 @@ Tailwind 의 base, component, utilties 스타일이 사용되도록 next.js 에�
 @tailwind utilities;
 ```
 
-> TailwindCSS 설치에 대한 자세한 내용은, 다음 링크를 확인하세요. [here](https://tailwindcss.com/docs/guides/nextjs)
+> If you would like to know more about installing TailwindCSS, plesae check [here](https://tailwindcss.com/docs/guides/nextjs)
 
-기본으로 생성된 **pages/index.js** 를 변경합니다.
+Let's update **pages/index.js**, which renders / root page.
 
 ```js
 /* pages/index.js */
@@ -149,16 +183,19 @@ function Home() {
 export default Home;
 ```
 
-문제없이 로딩이 되는지, `yarn dev` 명령어로 로컬에서 서버를 띄우고, 브라우져에서 확인해봅니다.
+Let's run `yarn dev` to start a local server, and check if the page
+loads with no issues on a browser at localhost:3000
 
 ```sh
 $ yarn dev
 ```
 
-## git repostory 초기화
+### Intializing a git repostory
 
-본 프로젝트를 위한 git repository를 하나 만들어주세요. (https://github.com/new)
-repository 생성을 하였으면, 로컬에서 git 을 초기화 하고, 생성된 repository 의 url 을 추가해주세요.
+Let's create a git repository for this project at (https://github.com/new)
+
+Once you create a repository, let's initialize a git in your folder, and
+add the created repository url.
 
 ```sh
 $ git init
@@ -168,19 +205,21 @@ $ git commit -m 'initial commit'
 $ git push origin main
 ```
 
-## Amplify CLI 설치 & AWS Amplify Project 초기화
+## Install Amplify CLI & Initialize Amplify Project
 
-### Amplify CLI 설치
+### Install Amplify CLI
 
-Amplify CLI 를 설치해봅시다.
+Let's install Amplify CLI
 
 ```sh
 $ npm install -g @aws-amplify/cli
 ```
 
-다음은 CLI 에서 AWS credential 을 사용하도록 설정해봅시다.
+Now, let's configure CLI to use your AWS credential.
 
-> 이 과정에 대한 자세한 설명을 보고 싶으면, 비디오를 확인하세요. [here](https://www.youtube.com/watch?v=fWbM5DLh25U)
+> If you would like to know more about the steps to create a credential,
+> please check this video
+> [here](https://www.youtube.com/watch?v=fWbM5DLh25U)
 
 ```sh
 $ amplify configure
@@ -194,9 +233,9 @@ $ amplify configure
 - Profile Name: amplify-cli-user
 ```
 
-### Amplify Project 초기화
+### Initialzing Amplify Project
 
-amplify 프로젝트를 초기화 해봅시다.
+Let's initialze your Amplify project.
 
 ```sh
 $ amplify init
@@ -214,21 +253,30 @@ $ amplify init
 - Please choose the profile you want to use: amplify-cli-user
 ```
 
-> **Distribution Directory Path 는 꼭 `out` 으로 변경해주세요.** (next.js 에서 build 후 export 를 하면 out 디렉토리로 결과물이 들어갑니다.)
+> **You must change Distribution Directory Path to `out`.**
+> After you build and export your Next.js, build artifacts will be
+> placed in `out` directory
 
-> `amplify init` 초기화가 끝나면, **amplify** 폴더가 생성되고 **src** 폴더아래 `aws-exports.js` 파일이 생성됩니다.
+> Once `amplify init` is done, **amplify** folder will be created and `aws-exports.js` file will be created in **src** folder.
 
-> **src/aws-exports.js** 는 amplify 의 설정값들이 들어있습니다.
+> **src/aws-exports.js** is where you will find Amplify config infos.
 
-> **amplify/team-provider-info.json** 파일에는 amplify 프로젝트의 back-end 환경(env) 관련 변수들이 들어가 있습니다. 다른 사람들과 동일한 백엔드 환경을 공유하고 싶다면, 이 파일을 공유하면 됩니다. 만약에 프로젝트를 공개하고 싶은 경우라면 이 파일은 빼주는게 좋습니다. (.gitignore 에 추가) [관련문서](https://docs.amplify.aws/cli/teams/shared)
+> **amplify/team-provider-info.json** contains variables for Amplify project's
+> back-end environment.
+> If you plan to share the same back-end environment, you should share
+> this file. If not (e.g. opening this project to a public), you should
+> not share this file (e.g. adding this file in `.gitignore`)
 
-amplify 프로젝트의 상태를 보고 싶다면 `amplify status` 명령어로 확인하실수 있습니다.
+> For more info, please check (https://docs.amplify.aws/cli/teams/shared)
+
+You can check Amplify project's status with `amplify status` command.
 
 ```sh
 $ amplify status
 ```
 
-amplify 프로젝트 상태를 Amplify console 로 확인하고 싶다면, `amplify console` 명령어로 확인할수 있습니다.
+If you want to check with Amplify console,`amplify console`
+should launch a console in your browser.
 
 ```sh
 $ amplify console
@@ -236,11 +284,11 @@ $ amplify console
 
 ### Configuring the Next applicaion with Amplify
 
-API 가 생성되고 준비되었으니, app 을 통해 테스트 해봅시다.
+Once we have Amplify project ready, we now need to make our Next.js app
+to be aware of Amplify project.
+We can do this by making the top level component to configure Amplify with `src/aws-exports.js` file
 
-우선 해야할일은, 우리가 만들고 있는 app 에서 Amplify project 에 대해 인식하도록 설정하는 것입니다. src 폴더 안에 자동생성된 `aws-exports.js` 파일을 참조하도록 추가해봅시다.
-
-설정을 하기위해 **pages/\_app.js** 파일을 열고, 다음 코드를 추가합니다.
+Let's open **pages/\_app.js** and add the following.
 
 ```diff
   import '../styles/globals.css'
@@ -255,13 +303,14 @@ API 가 생성되고 준비되었으니, app 을 통해 테스트 해봅시다.
   export default MyApp
 ```
 
-위 코드가 추가되면, app 에서 AWS service 를 이용할 준비가 됩니다.
+Once it's done, our Next.app is ready to use AWS managed by Amplify.
 
 ## Hosting
 
-Amplify Console 은 배포와 CI 를 위한 hosting 서비스 입니다.
+Amplify Console takes care of application hosting as well as CI and deployment.
 
-우선 build 스크립트 변경을 위해 **package.json** 안의 내용중 `scripts` 부분을 다음과 같이 변경해주세요.
+
+First, let's update **package.json** as follows.
 
 ```diff
 "scripts": {
@@ -272,11 +321,14 @@ Amplify Console 은 배포와 CI 를 위한 hosting 서비스 입니다.
 },
 ```
 
-> `next export` 는 next.js app 을 static HTML 파일로 변환해줍니다. 따라서 Node 서버가 필요 없이 app 을 로딩할수 있습니다.
+> `next export` generates static HTML from the Next.js app so the
+> application can be served as a static file without the need of a Node
+> server.
 
-> Amplify hosting 에서는 2021년 4월 현재 static file 만 서빙 가능합니다. 하지만 곧 server-side rendering 을 지원할 예정입니다.
+> As of 2021-04, Amplify hosting can only serve static files. However,
+> server-side rending will soon be supported.
 
-Hosting 을 추가하기 위해, 다음 명령어를 실행합니다.
+To add hosting, let's run `amplify add hosting`
 
 ```sh
 $ amplify add hosting
@@ -285,25 +337,26 @@ $ amplify add hosting
 ? Choose a type: Manual deployment
 ```
 
-`amplify push` 명령어로 변경사항 (`add hosting`) 을 적용해봅니다.
+To apply the change we just made, let's run `amplify push`
 
 ```sh
 $ amplify push
 ```
 
-`amplify publish` 명령어로 hosting 으로 배포를 해봅니다.
+To publish/deploy our application, run `amplify publish`
 
 ```sh
 $ amplify publish
 ```
 
-배포가 완료되면, 브라우져에서 터미널에 출력된 url 로 들어가보셔서 next.js 앱이 정상적으로 로딩되는 것을 확인해주세요.
+Once deployment is finished, a url will be printed. Go to the url in
+your browser, and make sure your application loads correctly.
 
 ## Adding Authentication
 
-다음과정은, authentication을 추가를 해보겠습니다.
+Let's now add authentication.
 
-authentication 추가를 위해, 다음 명령어를 실행합니다.
+To add authentication feature, run `amplify add auth`
 
 ```sh
 $ amplify add auth
@@ -313,7 +366,7 @@ $ amplify add auth
 ? Do you want to configure advanced settings? No, I am done.
 ```
 
-authentication 적용을 위해 `amplify push` 명령어를 실행합니다.
+To apply the change, run `amplify push`
 
 ```sh
 $ amplify push
@@ -321,13 +374,17 @@ $ amplify push
 ? Are you sure you want to continue? Yes
 ```
 
-### withAuthenticator 를 이용하여 로그인된 사용자만 접근 가능한 페이지 구현
+### withAuthenticator
 
-인증/로그인된 사용자들만 접근할수 있는 페이지에 `withAuthenticator` HOC (Higher Order Component) 를 적용하면 됩니다.
+Using `withAuthencator` HOC provided by amplify-ui, we can make sure
+pages are protected by authentication.
 
-예를들어, **/pages/index.js** 페이지에 withAuthenticator 를 적용하면, 사용자는 반드시 로그인을 해야합니다. 로그인이 되어있지 않다면, 로그인 페이지로 이동하게 됩니다.
+Once applied, users must log in to access the page. If not, they will be
+redirected to a login page.
 
-테스트를 위해 **/pages/index.js** 를 변경해봅시다.
+This UX flow is all taken care of by `withAuthenticator`
+
+To test, let's update **/pages/index.js**
 
 ```diff
 /* pages/index.js */
@@ -338,23 +395,23 @@ import Head from "next/head";
 + export default withAuthenticator(Home);
 ```
 
-> Authenticator UI Component 관련 문서 [here](https://docs.amplify.aws/ui/auth/authenticator/q/framework/react)
+> Authenticator UI Component document [here](https://docs.amplify.aws/ui/auth/authenticator/q/framework/react)
 
-코드를 변경했으면 브라우져에서 테스트 해봅시다.
+Let's start a dev server and test in the browser.
 
 ```sh
 yarn dev
 ```
 
-로그인 프롬프트가 뜨는 것으로, Authentication 플로우가 app 에 추가된것을 확인할 수 있습니다.
+If you try to load a root / page, you will be redirected to a login.
 
-일단, sign up 계정생성을 해봅시다.
+Let's create a new account with sign-up.
 
-계정 생성을 하면 입력한 이메일로 confirmation code 가 전송됩니다.
+Once signed up, you will receive a confirmation code in your email.
 
-이메일로 받은 confirmation code 를 입력해서 계정 생성을 마무리 합니다.
+Entering the confirmation code will complete the new user sign up.
 
-auth console 로 들어가면 생성된 사용자를 확인할수 있습니다.
+You can check newly created users in Auth console
 
 ```sh
 $ amplify console auth
@@ -364,7 +421,10 @@ $ amplify console auth
 
 ### Signout
 
-Signout 기능을 Signout UI Compnonent 를 이용해 추가해봅시다.
+Let's add signout by using Signout UI component.
+
+Add `AmplifySignout` compoent somewhere in your page component. (e.g.
+pages/index.js)
 
 ```js
 import { withAuthenticator, AmplifySignOut } from "@aws-amplify/ui-react";
@@ -373,15 +433,16 @@ import { withAuthenticator, AmplifySignOut } from "@aws-amplify/ui-react";
 <AmplifySignOut />;
 ```
 
-> Sign Out UI Component 문서 [here](https://docs.amplify.aws/ui/auth/sign-out/q/framework/react)
+> Sign Out UI Component doc [here](https://docs.amplify.aws/ui/auth/sign-out/q/framework/react)
 
-SignOut 버튼을 눌러서 로그아웃이 잘 되는지도 확인해보세요.
+Let's click on signout button, and make sure you can logout
+successfully.
 
 ### Accessing User Data
 
-로그인 상태에서 `Auth.currentAuthenticatedUser()` 로 사용자 정보를 가져올수 있습니다.
+When logged in, you can access authenticated user's information with `Auth.currentAuthenticatedUser()`
 
-**pages/index.js** 파일을 변경해봅시다.
+Let's update **pages/index.js** to print user information in console.
 
 ```diff
 + import { useEffect } from "react";
@@ -405,11 +466,12 @@ function Home() {
 
 ```
 
-브라우져 콘솔을 열고 / 페이지를 로딩하면, 콘솔에 로그인된 사용자 정보들과 attributes 들이 출력되는걸 확인할수 있습니다.
+Once you load the page with browser console opened, you will see the
+authenticated user's information and attributes in the console.
 
 ## Implementing UI
 
-UI 구현에 필요한 패키지를 설치합니다. devDependencies 로 들어가도록 설치합니다.
+Let's install additional packages for UI in devDependencies.
 
 ```sh
 $ yarn add --dev @headlessui/react @heroicons/react
@@ -417,9 +479,9 @@ $ yarn add --dev @headlessui/react @heroicons/react
 
 ### UI with mocking data
 
-하드코딩된 mocking 데이터인 (`TOPICS`) 로 Topic 목록과 새로운 Topic 을 추가하는 화면을 구현해봅시다.
+Let's implement UI to display Topics and add a new Topic. For now, we will use hard-coded mocking data to display Topics.
 
-**pages/index.js** 를 다음과 같이 변경합니다.
+Let's update **pages/index.js** as follows.
 
 ```javascript
 import Head from "next/head";
@@ -651,7 +713,7 @@ function Home() {
 export default withAuthenticator(Home);
 ```
 
-코드를 변경했으면 개발 서버를 띄우고 브라우져에서 테스트 해봅시다.
+Once we changed code, let's run dev server and test in browser.
 
 ```sh
 yarn dev
@@ -659,7 +721,7 @@ yarn dev
 
 ## Adding an AWS AppSync GraphQL API
 
-GraphQL API 를 추가하기 위해선, 다음 명령어를 실행합니다.
+To add GraphQL API, let's run `amplify add api`
 
 ```sh
 $ amplify add api
@@ -673,15 +735,22 @@ Use a Cognito user pool configured as a part of this project.
 ? Choose a schema template: Single object with fields (e.g., “Todo” with ID, name, description)
 ```
 
-> 기본 인증 방식은 Cognito UserPool (로그인 사용자) 입니다.
+> Please make sure you choose `Cognito UserPool` as default authorization type.
 
-## Topic & Comment 모델 추가
+> Want to learn more about GraphQL? [GraphQL Official Site](https://graphql.org/)
 
-- 로그인된 사용자 (owner) 는 Topic 과 Comment CRUD 가능
-- Moderator group 은 Topic 과 Comment Read/Update/Delete 가능
-- 나머지 로그인 사용자들은 Topic 과 Comment Read 가능
+> [GraphQL Explained in 100 seconds](https://www.youtube.com/watch?v=eIQh02xuVw4)
 
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다.
+> [Building Modern APIs with GraphQL](https://www.youtube.com/watch?v=bRnu7xvU1_Y)
+
+### Adding new models : Topic & Comment
+
+Following authorization rules will be applied
+- Authenticated users can CRUD their own Topic and Comment as a owner.
+- Moderator group can Read/Update/Delete Topic and Comment.
+- All authenticated users can only Read Topic and Comment.
+
+Let's add following in **amplify/backend/api/petstagram/schema.graphql**
 
 ```graphql
 type Topic
@@ -723,19 +792,20 @@ type Comment
 }
 ```
 
-변경 사항 적용을 위해 `amplify push --y` 명령어를 실행합니다.
+To apply the change, run `amplify push --y`
 
 ```sh
 $ amplify push --y
 ```
 
-## GraphQL API 와 연결
+## Using the GraphQL API in our app
 
-GraphQL API 를 이용하여 데이터를 가져와서 UI 에 보여줍시다.
+Now, let's call GraphQL API to feftch data and display in UI.
 
-### Topics 목록 가져오기
+### Fetching Topics list
 
-다음 코드가 API 를 이용하여 데이터를 가져오는 핵심 부분입니다.
+
+Following code is where fetching data is happening with GraphQL API.
 
 ```javascript
 const data = await API.graphql({ query: queries.listTopics });
@@ -749,7 +819,7 @@ const data = await API.graphql({ query: queries.listTopics });
 + import { API } from "aws-amplify";
 + import * as queries from "../src/graphql/queries";
 
-/* 이전과 동일 */
+/* same as before */
 
 function Home() {
   const [open, setOpen] = useState(false);
@@ -773,11 +843,11 @@ function Home() {
 }
 ```
 
-### 새로운 Topic 생성
+### Adding a new Topic
 
-새로운 Topic 을 생성하는 API 를 연동해봅시다.
+Let's create a new Topic with GraphQL API.
 
-다음 코드가 API 를 이용하여 데이터를 생성하는 핵심 부분입니다.
+Following code is used to create a new Topic with GraphQL API.
 
 ```javascript
 const newData = await API.graphql({
@@ -786,15 +856,15 @@ const newData = await API.graphql({
 });
 ```
 
-> Data Mutation Query API 문서(https://docs.amplify.aws/lib/graphqlapi/mutate-data/q/platform/js)
+> Data Mutation Query API doc(https://docs.amplify.aws/lib/graphqlapi/mutate-data/q/platform/js)
 
-**pages/index.js** 를 다음과 같이 변경합니다.
+Let's update **pages/index.js**
 
 ```diff
 import * as queries from "../src/graphql/queries";
 + import * as mutations from "../src/graphql/mutations";
 
-/* 이전과 동일 */
+/* same as before */
 
 function Home() {
   const [open, setOpen] = useState(false);
@@ -802,7 +872,7 @@ function Home() {
   const [topics, setTopics] = useState([]);
 + const [createInProgress, setCreateInProgress] = useState(false);
 
-  /* 이전과 동일 */
+  /* same as before */
 
 + async function createNewTopic() {
 +   setCreateInProgress(true);
@@ -874,23 +944,23 @@ function Home() {
 }
 ```
 
-개발 서버를 띄우고 브라우져에서 테스트 해봅시다. Comment 데이터가 잘 생성되는지도 테스트 해봅시다.
+Start a dev server and test in your browser. Make sure a Topic gets created successfully.
 
 ```sh
 yarn dev
 ```
 
-새로운 Topic 생성이 잘 되지만, 화면에 업데이트 되지는 않습니다.
+A new Topic gets created, but it doesn't get updated in the UI.
 
-어떻게 하면 좋을까요? 두가지 방법이 있습니다. (1) 화면 리로딩을 하고 전체 데이터 로딩 (2) Subscription 을 통한 업데이트.
+What can we do about it? We have 2 answers. (1) Reload the whole page and re-fetech the data (2) Get updates via Subscription and update the UI accordingly.
 
-GraphQL API 에서는 Subscription 기능도 제공합니다. 따라서 Subsription 을 이용해보도록 하겠습니다.
+GraphQL API provides Subscription. So let's utilize it!
 
-## Subscription 을 통한 업데이트
+## Update UI with Subscription
 
-Topic 생성시 GraphQL Subscription 을 통해 업데이트를 받고, 화면 업데이트 해봅시다.
+When a new Topic gets created, we receive `onCreateTopic` event via Subscription and update the UI accordingly.
 
-다음 코드가 Subscription 의 핵심 코드입니다.
+Following code is the core for Subscription.
 
 ```javascript
 const subscription = API.graphql({
@@ -905,19 +975,19 @@ const subscription = API.graphql({
 });
 ```
 
-> Subscription 문서(https://docs.amplify.aws/lib/graphqlapi/subscribe-data/q/platform/js)
+> Subscription doc(https://docs.amplify.aws/lib/graphqlapi/subscribe-data/q/platform/js)
 
-**pages/index.js** 에서 onCreatePost 이벤트에 subscription 을 생성합니다.
+Let's create Subscription on `onCreatePost` event in **pages/index.js**
 
 ```diff
 import * as queries from "../src/graphql/queries";
 import * as mutations from "../src/graphql/mutations";
 + import * as subscriptions from "../src/graphql/subscriptions";
 
-/* 이전과 동일 */
+/* Same as before */
 
 function Home() {
-  /* 이전과 동일 */
+  /* Same as before */
   useEffect(() => {
     checkUser();
     fetchTopics();
@@ -925,7 +995,9 @@ function Home() {
 +     return () => {
 +       subscription.unsubscribe();
 +     };
-  }, []);
+    }, []);
+
+
 + function subscribeToOnCreateTopic() {
 +   const subscription = API.graphql({
 +     query: subscriptions.onCreateTopic,
@@ -941,19 +1013,22 @@ function Home() {
 +   return subscription;
 + }
 
-  /* 이전과 동일 */
+  /* Same as before */
 }
 ```
 
-Topic 을 생성해보고, 화면 업데이트가 잘 되는지 확인해주세요. 브라우져를 하나 더 띄워놓고 확인해보는 것도 방법입니다.
+Create a new Topic and make sure the UI gets updated correctly.
+Open another brower to see changes.
 
-## Topic Page
+## Topic Page with Dynamic Routes
 
-토픽 목록 페이지에서 토픽을 선택하면 `topic/12311231231` 와 같은 상세페이지로 넘어가고, Comment 들을 포함한 상세 내용을 보여줘야 합니다.
+Once users select a Topic, they need to be redirected to a page like `topic/1234567` that shows details about the Topic, including all the Comments in the Topic.
 
-이번에는 Next.js 의 Dynamic Routes(https://nextjs.org/docs/routing/dynamic-routes) 을 이용하여, (1) 토픽의 제목과 토픽내 코멘트들을 보여주고 (2) 새로운 토픽을 추가할수 있는 페이지를 만들어보겠습니다.
+We will use Dynmic Routes(https://nextjs.org/docs/routing/dynamic-routes) from Next.js to implment that page.
 
-**pages/topic/[id].js** 파일을 생성하고, 다음과 같이 채워줍시다.
+The page will (1) show Topic's title and Comments (2) have a form to add a new Comment
+
+Let's create **pages/topic/[id].js** file with following.
 
 ```javascript
 import Head from "next/head";
@@ -970,7 +1045,7 @@ function CommentList({ commentsItems }) {
       <div className="flow-root">
         <div className="text-center">
           <p className="max-w-xl mx-auto mt-5 text-xl text-gray-500">
-            등록된 글이 없습니다.
+            No Comment.
           </p>
         </div>
       </div>
@@ -1029,7 +1104,7 @@ function CommentList({ commentsItems }) {
   );
 }
 
-function TopicForm({ formData, setFormData, handleSubmit, disableSubmit }) {
+function CommentForm({ formData, setFormData, handleSubmit, disableSubmit }) {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
@@ -1141,7 +1216,7 @@ function TopicPage() {
                 <div className="mt-10" />
                 <CommentList commentsItems={comments} />
                 <div className="mt-20" />
-                <TopicForm
+                <CommentForm
                   formData={formData}
                   setFormData={setFormData}
                   disableSubmit={disableSubmit}
@@ -1159,17 +1234,19 @@ function TopicPage() {
 export default TopicPage;
 ```
 
-이번에도 개발 서버를 띄우고 브라우져에서 테스트 해봅시다. Topic 데이터가 잘 생성되는지도 테스트 해봅시다.
+Start a dev server and test in browser. Make sure a new Comment gets created correctly.
 
 ```sh
 yarn dev
 ```
 
-## Filtered Subscription 추가
+## Filtered Subscription
 
-이번에도 역시 새로운 데이터가 (Comment) 추가될때 화면이 업데이트 될수 있도록 Subscription 을 추가하도록 하겠습니다. 하지만 이번에는 TopicId 와 관련된 Comment 들만 업데이트 받도록 해보겠습니다.
+Let's add a Subscription so we can get an update when a new Comment gets created and update UI.
 
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다
+However, we will need to get an update only when a new Comment related to the TopicId is created.
+
+To do that, let's create a new Subscription type **amplify/backend/api/petstagram/schema.graphql**
 
 ```graphql
 type Subscription {
@@ -1178,24 +1255,24 @@ type Subscription {
 }
 ```
 
-> GraphQL Subscription by id 문서 (https://docs.amplify.aws/guides/api-graphql/subscriptions-by-id/q/platform/js)
+> GraphQL Subscription by id doc(https://docs.amplify.aws/guides/api-graphql/subscriptions-by-id/q/platform/js)
 
-`amplify push --y` 명령어로 변경사항을 적용해봅니다.
+To apply the change, run `amplify push --y`
 
 ```sh
 $ amplify push --y
 ```
 
-**pages/topic/[id].js** 을 다음과 같이 변경해주세요.
+Let's update **pages/topic/[id].js**
 
 ```diff
 import * as mutations from "../../src/graphql/mutations";
 + import * as subscriptions from "../../src/graphql/subscriptions";
 
-/* 이전과 동일 */
+/* Same as before */
 
 function TopicPage() {
-  /* 이전과 동일 */
+  /* Same as before */
 
   useEffect(() => {
     if (topicId) {
@@ -1226,17 +1303,18 @@ function TopicPage() {
 +    return subscription;
 +  }
 
-  /* 이전과 동일 */
+  /* Same as before */
 }
 ```
 
-Comment 를 생성해보고, 화면 업데이트가 잘 되는지 확인해주세요. 브라우져를 여러개 띄우고 여러개의 토픽 페이지를 띄우고 테스트 해보세요.
+Create a new Comment and make sure UI gets updated correctly.
+Open multiple browsers with different topic pages. Make sure only the pages with the same Topic gets updated.
 
-## Comment 삭제
+## Delete Comment
 
-Comment 삭제기능도 추가해봅시다.
+Let's add a feature to delete a Comment
 
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 `onDeleteCommentByTopicId` subscription 도 추가해줍니다.
+We need to add another Subscription `onDeleteCommentByTopicId` in **amplify/backend/api/petstagram/schema.graphql**
 
 ```diff
 type Subscription {
@@ -1247,19 +1325,72 @@ type Subscription {
 }
 ```
 
-`amplify push --y` 명령어로 변경사항을 적용해봅니다.
+Apply the change with `amplify push --y`
 
 ```sh
 $ amplify push --y
 ```
 
-**pages/topic/[id].js** 에 delete button 을 추가해줍니다.
+Let's add a delete button in **pages/topic/[id].js**
 
 ```diff
-/* 이전과 동일 */
+/* Same as before */
 
-function CommentList({ commentsItems }) {
-  /* 이전과 동일 */
++ function DeleteCommentButton({ comment }) {
++   async function deleteComment() {
++     if (!confirm("Are you sure?")) {
++       return;
++     }
++
++     const deletedComment = await API.graphql({
++       query: mutations.deleteComment,
++       variables: { input: { id: comment.id } },
++     });
++
++     alert("Deleted a comment");
++     console.log("deletedComment = ", deletedComment);
++   }
++
++   return <button onClick={deleteComment}>delete</button>;
++ }
+
+function TopicPage() {
+  /* Same as before */
+
+  useEffect(() => {
+    if (topicId) {
+      fetchTopic();
+-      const subscription = subscribeToOnCreateComment();
++      const onCreateSubscription = subscribeToOnCreateComment();
++      const onDeleteSubscription = subscribeToOnDeleteComment();
++      return () => {
+-        subscription.unsubscribe();
++        onCreateSubscription.unsubscribe();
++        onDeleteSubscription.unsubscribe();
++      };
+    }
+  }, [topicId]);
+
+  /* Same as before */
+
++  function subscribeToOnDeleteComment() {
++    const subscription = API.graphql({
++      query: subscriptions.onDeleteCommentByTopicId,
++      variables: {
++        topicId: topicId,
++      },
++    }).subscribe({
++      next: ({ provider, value }) => {
++        console.log({ provider, value });
++        const item = value.data.onDeleteCommentByTopicId;
++        console.log("deleted comment = ", item);
++        setComments((comments) => comments.filter((c) => c.id !== item.id));
++      },
++      error: (error) => console.warn(error),
++    });
++
++    return subscription;
++  }
 
   return (
     <div className="flow-root">
@@ -1314,94 +1445,41 @@ function CommentList({ commentsItems }) {
       </ul>
     </div>
   );
-}
 
-+ function DeleteCommentButton({ comment }) {
-+   async function deleteComment() {
-+     if (!confirm("Are you sure?")) {
-+       return;
-+     }
-+
-+     const deletedComment = await API.graphql({
-+       query: mutations.deleteComment,
-+       variables: { input: { id: comment.id } },
-+     });
-+
-+     alert("Deleted a comment");
-+     console.log("deletedComment = ", deletedComment);
-+   }
-+
-+   return <button onClick={deleteComment}>delete</button>;
-+ }
-
-function TopicPage() {
-  /* 이전과 동일 */
-
-  useEffect(() => {
-    if (topicId) {
-      fetchTopic();
--      const subscription = subscribeToOnCreateComment();
-+      const onCreateSubscription = subscribeToOnCreateComment();
-+      const onDeleteSubscription = subscribeToOnDeleteComment();
-+      return () => {
--        subscription.unsubscribe();
-+        onCreateSubscription.unsubscribe();
-+        onDeleteSubscription.unsubscribe();
-+      };
-    }
-  }, [topicId]);
-
-  /* 이전과 동일 */
-
-+  function subscribeToOnDeleteComment() {
-+    const subscription = API.graphql({
-+      query: subscriptions.onDeleteCommentByTopicId,
-+      variables: {
-+        topicId: topicId,
-+      },
-+    }).subscribe({
-+      next: ({ provider, value }) => {
-+        console.log({ provider, value });
-+        const item = value.data.onDeleteCommentByTopicId;
-+        console.log("deleted comment = ", item);
-+        setComments((comments) => comments.filter((c) => c.id !== item.id));
-+      },
-+      error: (error) => console.warn(error),
-+    });
-+
-+    return subscription;
-+  }
-
-  /* 이전과 동일 */
+  /* Same as before */
 }
 ```
 
-Comment 를 삭제해보고, 화면 업데이트가 잘 되는지 확인해주세요. 브라우져를 여러개 띄우고 여러개의 토픽 페이지를 띄우고 테스트 해보세요.
+Delete a Comment and check if UI gets updated correctly.
+To test better, open multiple browsers with different Topics loaded
 
 ## Local mocking
 
-API, database, storage 를 로컬에서 mock 으로 띄우려면 `amplify mock` 을 실행하면 됩니다.
+If you want to run API, database, storage in your local machine, run `amplify mock`
 
 ```sh
 $ amplify mock
 ```
 
-## 추가적인 테스트 케이스들 + TODO's
+## Additional Tests + TODO's
 
-- 다른 사람이 작성한 코멘트는 삭제되면 안됩니다. `Auth.currentAuthenticatedUser` 로 현재 사용자를 확인후, 본인의 코멘트가 아닌경우 UI 에서 삭제 버튼이 보이지 않게 구현해보세요.
-- Moderator 는 Topic 과 Comment 을 Update/Delete 할수 있습니다. 새로운 사용자를 등록하고, Moderator 그룹으로 등록하고 테스트 해보세요.
-- Comment 의 갯수가 많은경우는 nextToken 을 파라미터로 주어서 데이터를 가져와야 합니다. 이 경우도 테스트를 해주세요.
-- Topic 안의 comments 는 정렬이 안된 상태로 넘어옵니다. `createdAt` 혹은 `updatedAt` 으로 정렬된 상태로 넘어오게 변경해보세요.
+- Users shall not be able to delete Comments by other users.
+- Check current user with `Auth.currentAuthenticatedUser`, and hide delete button if Comment's owner is different from current user.
+- Moderator users can update and delete Topic and Comment. Create additional users. Add them to Moderator group. Test with those users.
+- When Comments cannot be fetched in a single API call, non-null nextToken will be returned. Use it to fetch addtional data.
+- Comments inside Topic get returned unsorted. Do something to have Comments returned sorted by either `createdAt` or `updatedAt` field.
 
-> 힌트 : schema.graphql 에서 Topic 내 comments relation 을 정의할때 `@connection` directive 를 사용하게 됩니다. 여기에 옵션으로 줄수 있는 파라미터가 있습니다.
+> Hints : When defining relations, `@connection` directive is used. There is an option you can give in that directive.
 
-> @connection directive 관련 문서(https://docs.amplify.aws/cli/graphql-transformer/connection)
+> @connection directive doc(https://docs.amplify.aws/cli/graphql-transformer/connection)
 
 > [Common GraphQL Schemas for Amplify Applications](https://github.com/tkang/amplify-graphql-schemas/)
 
 ## Removing Services
 
-만약에 프로젝트와 어카운트에서 서비스를 삭제하고 싶으면 `amplify remove` 명령어로 수행할수 있습니다.
+If you want to remove one of the services you added with Amplify CLI, you can run `amplify remove`
+
+For example, `amplify remove auth` will remove authentication feature.
 
 ```sh
 $ amplify remove auth
@@ -1409,7 +1487,7 @@ $ amplify remove auth
 $ amplify push
 ```
 
-어떤 서비스가 enabled 되어있는지 모르겠으면 `amplify status` 로 확인할수 있습니다.
+If you are not sure about which services you have enabled, you can check with `amplify status`
 
 ```sh
 $ amplify status
@@ -1417,7 +1495,7 @@ $ amplify status
 
 ### Deleting the Amplify project and all services
 
-프로젝트를 모두 지우고 싶다면 `amplify delete` 명령어로 할수 있습니다.
+If you want to delete Amplify project completely, run `amplify delete`
 
 ```sh
 $ amplify delete

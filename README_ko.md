@@ -14,6 +14,12 @@
 
 [Demo](https://dev.d2lf8ywg8xsqzo.amplifyapp.com)
 
+### Architecture
+
+본 가이드는 아래와 같은 architecture 로 fully-serverless application 을 만들게 됩니다.
+
+![Architecture](https://github.com/tkang/amplify-forum/blob/main/amplify-architecture.png?raw=true)
+
 ### Required Background / Level
 
 본 워크샾은 full stack serverless 개발에 대해 알고 싶은 front-end 와 back-end 개발자들을 위해 만들어졌습니다.

@@ -24,6 +24,12 @@ This hands-on lab is expected to be done in 2 to 4 hours
 
 [Demo](https://dev.d2lf8ywg8xsqzo.amplifyapp.com)
 
+### Architecture
+
+This guide will build a fully-serverless application with following architecture.
+
+![Architecture](https://github.com/tkang/amplify-forum/blob/main/amplify-architecture.png?raw=true)
+
 ### Required Background / Level
 
 This guide has been made for front-end and back-end developers who want to learn more about building a full-stack serverless application on AWS.
