@@ -18,7 +18,7 @@ We will then use Amplify CLI to set up AWS Cloud environment and use Amplify JS 
 
 This project will be a fully-serverless application with following architecture.
 
-
+**NOTE** : *Following this guide will create resources on AWS and it could incur some costs. The cost will most likely be under the monthly free-tier limit. At the end of this guide we will show you how to delete the resource.* [Removing Services](#removing-services)
 
 This hands-on lab is expected to be done in 2 to 4 hours
 

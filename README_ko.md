@@ -12,6 +12,8 @@
 
 본 워크샾은 2~5시간 정도 걸릴것으로 예상됩니다.
 
+**NOTE** : *본 가이드는 AWS 위에 리소스들을 생성하게 되며 이는 비용을 발생시킬수 있습니다. (아마도 monthly free-tier limit 으로 커버가 될것으로 예상됩니다.) 본 가이드의 마지막에서는 생성된 리소스를 삭제하는 방법을 보여드립니다.* [Removing Services](#removing-services)
+
 [Demo](https://dev.d2lf8ywg8xsqzo.amplifyapp.com)
 
 ### Architecture
