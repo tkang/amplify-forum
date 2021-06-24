@@ -18,7 +18,7 @@ We will then use Amplify CLI to set up AWS Cloud environment and use Amplify JS 
 
 This project will be a fully-serverless application with following architecture.
 
-**NOTE** : *Following this guide will create resources on AWS and it could incur some costs. The cost will most likely be under the monthly free-tier limit. At the end of this guide we will show you how to delete the resource.* [Removing Services](#removing-services)
+**NOTE** : _Following this guide will create resources on AWS and it could incur some costs. The cost will most likely be under the monthly free-tier limit. At the end of this guide we will show you how to delete the resource._ [Removing Services](#deleting-the-amplify-project-and-all-services)
 
 This hands-on lab is expected to be done in 2 to 4 hours
 
@@ -50,17 +50,23 @@ Having knowledge in React and GraphQL is helpful, but not necessary.
 1. Application hosting
 2. Authentication : Sign Up, Login, Signout
 3. Data Modeling
+
 - There can be N Topics
 - A Topic can have N Comments.
+
 4. Authorization
+
 - Authenticated (Logged-in) users can create, read, update, delete a
   Topic and Comment. They can only update and delete their own.
 - Users in Moderator group can read, update, and delete Topics and
   Comments.
 - Authenticated (Logged-in) users can read all Topics and Comments.
+
 5. Application UI
+
 - List Topics
 - View Topics with Comments
+
 6. Add and delete records (Topic, Comment)
 7. Realtime updates with Subscription
 
@@ -113,6 +119,7 @@ $ npx tailwindcss init -p
 ```
 
 Now, let's update `tailwind.config.js` as following.
+
 > This is to do tree-shake unused styling in production build
 
 ```diff
@@ -308,7 +315,6 @@ Once it's done, our Next.app is ready to use AWS managed by Amplify.
 ## Hosting
 
 Amplify Console takes care of application hosting as well as CI and deployment.
-
 
 First, let's update **package.json** as follows.
 
@@ -746,6 +752,7 @@ Use a Cognito user pool configured as a part of this project.
 ### Adding new models : Topic & Comment
 
 Following authorization rules will be applied
+
 - Authenticated users can CRUD their own Topic and Comment as a owner.
 - Moderator group can Read/Update/Delete Topic and Comment.
 - All authenticated users can only Read Topic and Comment.
@@ -803,7 +810,6 @@ $ amplify push --y
 Now, let's call GraphQL API to feftch data and display in UI.
 
 ### Fetching Topics list
-
 
 Following code is where fetching data is happening with GraphQL API.
 
@@ -1464,9 +1470,14 @@ $ amplify mock
 ## Additional Tests + TODO's
 
 - Users shall not be able to delete Comments by other users.
-- Check current user with `Auth.currentAuthenticatedUser`, and hide delete button if Comment's owner is different from current user.
+- Hide delete button if Comment's owner is different from current user.
+
+  > Hints : We can get current user's information with `Auth.currentAuthenticatedUser()`
+
 - Moderator users can update and delete Topic and Comment. Create additional users. Add them to Moderator group. Test with those users.
+
 - When Comments cannot be fetched in a single API call, non-null nextToken will be returned. Use it to fetch addtional data.
+
 - Comments inside Topic get returned unsorted. Do something to have Comments returned sorted by either `createdAt` or `updatedAt` field.
 
 > Hints : When defining relations, `@connection` directive is used. There is an option you can give in that directive.
