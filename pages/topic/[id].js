@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState, Fragment } from "react";
-import { API } from "aws-amplify";
+import { API, Auth, Storage } from "aws-amplify";
 import { ChatAltIcon, UserCircleIcon } from "@heroicons/react/solid";
 import * as queries from "../../src/graphql/queries";
 import * as mutations from "../../src/graphql/mutations";
@@ -75,7 +75,13 @@ function CommentList({ commentsItems }) {
   );
 }
 
-function TopicForm({ formData, setFormData, handleSubmit, disableSubmit }) {
+function CommentForm({
+  formData,
+  setFormData,
+  handleSubmit,
+  disableSubmit,
+  handleFileInputChange,
+}) {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
@@ -99,6 +105,7 @@ function TopicForm({ formData, setFormData, handleSubmit, disableSubmit }) {
         />
       </div>
       <div className="mt-2" />
+      <input type="file" onChange={handleFileInputChange}></input>
       <button
         type="button"
         onClick={handleSubmit}
@@ -224,6 +231,14 @@ function TopicPage() {
     setCreateInProgress(false);
   }
 
+  async function handleFileInputChange(e) {
+    const file = e.target.files[0];
+    const result = await Storage.put(file.name, file);
+    console.log("upload result = ", result);
+    const { key } = result;
+    setFormData({ ...formData, image: key });
+  }
+
   const disableSubmit = createInProgress || formData.content.length === 0;
 
   return (
@@ -250,11 +265,12 @@ function TopicPage() {
                 <div className="mt-10" />
                 <CommentList commentsItems={comments} />
                 <div className="mt-20" />
-                <TopicForm
+                <CommentForm
                   formData={formData}
                   setFormData={setFormData}
                   disableSubmit={disableSubmit}
                   handleSubmit={createNewComment}
+                  handleFileInputChange={handleFileInputChange}
                 />
               </>
             )}

@@ -691,7 +691,7 @@ Use a Cognito user pool configured as a part of this project.
 - Moderator group 은 Topic 과 Comment Read/Update/Delete 가능
 - 나머지 로그인 사용자들은 Topic 과 Comment Read 가능
 
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다.
+**amplify/backend/api/amplifyforum/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다.
 
 ```graphql
 type Topic
@@ -1179,7 +1179,7 @@ yarn dev
 
 이번에도 역시 새로운 데이터가 (Comment) 추가될때 화면이 업데이트 될수 있도록 Subscription 을 추가하도록 하겠습니다. 하지만 이번에는 TopicId 와 관련된 Comment 들만 업데이트 받도록 해보겠습니다.
 
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다
+**amplify/backend/api/amplifyforum/schema.graphql** 파일을 열어 다음 내용을 추가해줍니다
 
 ```graphql
 type Subscription {
@@ -1246,7 +1246,7 @@ Comment 를 생성해보고, 화면 업데이트가 잘 되는지 확인해주�
 
 Comment 삭제기능도 추가해봅시다.
 
-**amplify/backend/api/petstagram/schema.graphql** 파일을 열어 `onDeleteCommentByTopicId` subscription 도 추가해줍니다.
+**amplify/backend/api/amplifyforum/schema.graphql** 파일을 열어 `onDeleteCommentByTopicId` subscription 도 추가해줍니다.
 
 ```diff
 type Subscription {
@@ -1387,6 +1387,285 @@ function TopicPage() {
 ```
 
 Comment 를 삭제해보고, 화면 업데이트가 잘 되는지 확인해주세요. 브라우져를 여러개 띄우고 여러개의 토픽 페이지를 띄우고 테스트 해보세요.
+
+## Data storage with S3
+
+파일을 업로드 다운로드를 위한 S3 bucket 을 셋업해봅시다.
+
+### Adding a storage
+
+`amplify add storage` 명령어로 storage 를 추가해봅시다.
+
+```sh
+$ amplify add storage
+
+? Please select from one of the below mentioned services: Content
+? Please provide a friendly name for your resource that will be used to label this category in the project: images
+? Please provide bucket name: amplifyforum14148f2f4aeb4f259c847e1e27145a2 <use_default>
+? Who should have access: Auth and guest users
+? What kind of access do you want for Authenticated users? create, update, read, delete
+? What kind of access do you want for Guest users? read
+? Do you want to add a Lambda Trigger for your S3 Bucket? N
+```
+
+`amplify push --y` 로 방금의 변경사항을 적용합니다.
+
+```sh
+$ amplify push --y
+```
+
+### Saving an item to S3
+
+To save data in S3, we need to use `Storage` `Storage` can be used as follows.
+
+```js
+const file = e.target.files[0];
+await Storage.put(file.name, file);
+```
+
+> [Document for Upload files to Storage](https://docs.amplify.aws/lib/storage/upload/q/platform/js)
+
+- We can give object access level options when uploading - `public` `protected` `private` [Document on file access levels](https://docs.amplify.aws/lib/storage/configureaccess/q/platform/js)
+
+### Getting an item from S3
+
+```js
+const image = await Storage.get("my-image-key.jpg");
+```
+
+When getting objects with `Storage`, it automatically generates a pre-signed url that allows users to access the object. [pre-signed url](https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html)
+
+> [Document on downloading files from Storage](https://docs.amplify.aws/lib/storage/download/q/platform/js)
+
+### UI to save a file.
+
+In Topic page, update UI to allow image upload. Let's update **pages/topic/[id].js** as fowllows.
+
+```diff
++ import { API, Auth, Storage } from "aws-amplify";
+
+/* same as before */
+
+function CommentForm({
+  formData,
+  setFormData,
+  handleSubmit,
+  disableSubmit,
++ handleFileInputChange,
+}) {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  return (
+    <div>
+      <label
+        htmlFor="content"
+        className="block text-sm font-medium text-gray-700"
+      >
+        Comment
+      </label>
+      <div className="mt-1">
+        <textarea
+          id="content"
+          name="content"
+          rows={5}
+          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          value={formData.content}
+          onChange={handleChange}
+        />
+      </div>
+      <div className="mt-2" />
++     <input type="file" onChange={handleFileInputChange}></input>
+      <button
+        type="button"
+        onClick={handleSubmit}
+        className={`inline-flex items-center px-4 py-2 text-base font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+          disableSubmit && "cursor-not-allowed"
+        }`}
+      >
+        Add New Comment
+      </button>
+    </div>
+  );
+}
+
+/* same as before */
+
+function TopicPage() {
+
+/* same as before */
+
++  async function handleFileInputChange(e) {
++    const file = e.target.files[0];
++    const result = await Storage.put(file.name, file);
++    console.log("upload result = ", result);
++    const { key } = result;
++    setFormData({ ...formData, image: key });
++  }
+
+  const disableSubmit = createInProgress || formData.content.length === 0;
+
+  return (
+    <div>
+      <Head>
+        <title>Amplify Forum</title>
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text></svg>"
+        />
+      </Head>
+
+      <div className="container mx-auto">
+        <main className="bg-white">
+          <div className="px-4 py-16 mx-auto max-w-7xl sm:py-24 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <p className="mt-1 text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+                {!topic && "Loading..."}
+                {topic && topic.title}
+              </p>
+            </div>
+            {topic && (
+              <>
+                <div className="mt-10" />
+                <CommentList commentsItems={comments} />
+                <div className="mt-20" />
+                <CommentForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  disableSubmit={disableSubmit}
+                  handleSubmit={createNewComment}
++                 handleFileInputChange={handleFileInputChange}
+                />
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+```
+
+### Update GraphQL schema
+
+We need to add `image` field in `Comment` model
+Let's update **amplify/backend/api/amplifyforum/schema.graphql**
+
+```diff
+type Comment
+  @model
+  @key(name: "topicComments", fields: ["topicId", "content"])
+  @auth(
+    rules: [
+      { allow: owner }
+      {
+        allow: groups
+        groups: ["Moderator"]
+        operations: [read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  topicId: ID!
+  content: String!
+  topic: Topic @connection(fields: ["topicId"])
+  image: String
+}
+```
+
+apply change with `amplify push --y`
+
+```sh
+amplify push --y
+```
+
+### Getting and displaying saved file
+
+We will use `AmplifyS3Image` ui component to display image. Let's update **pages/topic/[id].js**
+
+> [Document on AmplifyS3Image UI Component](https://docs.amplify.aws/ui/storage/s3-image/q/framework/react)
+
+```diff
++ import { AmplifyS3Image } from "@aws-amplify/ui-react";
+
+function CommentList({ commentsItems }) {
+  if (commentsItems.length === 0) {
+    return (
+      <div className="flow-root">
+        <div className="text-center">
+          <p className="max-w-xl mx-auto mt-5 text-xl text-gray-500">
+            등록된 글이 없습니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flow-root">
+      <ul className="-mb-8">
+        {commentsItems.map((commentItem, commentItemIdx) => (
+          <li key={commentItem.id}>
+            <div className="relative pb-8">
+              {commentItemIdx !== commentItem.length - 1 ? (
+                <span
+                  className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <div className="relative flex items-start space-x-3">
+                <>
+                  <div className="relative">
+                    <UserCircleIcon
+                      className="items-center justify-center w-10 h-10 text-gray-500"
+                      aria-hidden="true"
+                    />
+
+                    <span className="absolute -bottom-0.5 -right-1 bg-white rounded-tl px-0.5 py-px">
+                      <ChatAltIcon
+                        className="w-5 h-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div>
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-900">
+                          {commentItem.owner}
+                          <span className="float-right">
+                            <DeleteCommentButton comment={commentItem} />
+                          </span>
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-sm text-gray-500">
+                        Commented at {commentItem.createdAt}
+                      </p>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-700">
+                      <p>{commentItem.content}</p>
+                    </div>
++                   <div className="mt-2">
++                     <AmplifyS3Image imgKey={commentItem.image} />
++                   </div>
+                  </div>
+                </>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+```
+
+### Deleting a file
+
+**TODO**
 
 ## Local mocking
 

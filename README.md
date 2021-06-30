@@ -43,6 +43,7 @@ Having knowledge in React and GraphQL is helpful, but not necessary.
 - Authentication
 - GraphQL API : query, mutation, subscription, filtered subscription
 - Authorization
+- Storage with S3
 - Deleting the resources
 
 ### Features we will implement
@@ -69,6 +70,8 @@ Having knowledge in React and GraphQL is helpful, but not necessary.
 
 6. Add and delete records (Topic, Comment)
 7. Realtime updates with Subscription
+
+8. Data storage with S3 : Upload files to S3
 
 ### Development Environment
 
@@ -757,7 +760,7 @@ Following authorization rules will be applied
 - Moderator group can Read/Update/Delete Topic and Comment.
 - All authenticated users can only Read Topic and Comment.
 
-Let's add following in **amplify/backend/api/petstagram/schema.graphql**
+Let's add following in **amplify/backend/api/amplifyforum/schema.graphql**
 
 ```graphql
 type Topic
@@ -1252,7 +1255,7 @@ Let's add a Subscription so we can get an update when a new Comment gets created
 
 However, we will need to get an update only when a new Comment related to the TopicId is created.
 
-To do that, let's create a new Subscription type **amplify/backend/api/petstagram/schema.graphql**
+To do that, let's create a new Subscription type **amplify/backend/api/amplifyforum/schema.graphql**
 
 ```graphql
 type Subscription {
@@ -1320,7 +1323,7 @@ Open multiple browsers with different topic pages. Make sure only the pages with
 
 Let's add a feature to delete a Comment
 
-We need to add another Subscription `onDeleteCommentByTopicId` in **amplify/backend/api/petstagram/schema.graphql**
+We need to add another Subscription `onDeleteCommentByTopicId` in **amplify/backend/api/amplifyforum/schema.graphql**
 
 ```diff
 type Subscription {
@@ -1458,6 +1461,285 @@ function TopicPage() {
 
 Delete a Comment and check if UI gets updated correctly.
 To test better, open multiple browsers with different Topics loaded
+
+## Data storage with S3
+
+Let's set up an S3 bucket where our application can upload files to.
+
+### Adding a storage
+
+To add a Storage, let's run `amplify add storage`
+
+```sh
+$ amplify add storage
+
+? Please select from one of the below mentioned services: Content
+? Please provide a friendly name for your resource that will be used to label this category in the project: images
+? Please provide bucket name: amplifyforum14148f2f4aeb4f259c847e1e27145a2 <use_default>
+? Who should have access: Auth and guest users
+? What kind of access do you want for Authenticated users? create, update, read, delete
+? What kind of access do you want for Guest users? read
+? Do you want to add a Lambda Trigger for your S3 Bucket? N
+```
+
+To apply the change, run `amplify push --y`
+
+```sh
+$ amplify push --y
+```
+
+### Saving an item to S3
+
+To save data in S3, we need to use `Storage` `Storage` can be used as follows.
+
+```js
+const file = e.target.files[0];
+await Storage.put(file.name, file);
+```
+
+> [Document for Upload files to Storage](https://docs.amplify.aws/lib/storage/upload/q/platform/js)
+
+- We can give object access level options when uploading - `public` `protected` `private` [Document on file access levels](https://docs.amplify.aws/lib/storage/configureaccess/q/platform/js)
+
+### Getting an item from S3
+
+```js
+const image = await Storage.get("my-image-key.jpg");
+```
+
+When getting objects with `Storage`, it automatically generates a pre-signed url that allows users to access the object. [pre-signed url](https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html)
+
+> [Document on downloading files from Storage](https://docs.amplify.aws/lib/storage/download/q/platform/js)
+
+### UI to save a file.
+
+In Topic page, update UI to allow image upload. Let's update **pages/topic/[id].js** as fowllows.
+
+```diff
++ import { API, Auth, Storage } from "aws-amplify";
+
+/* same as before */
+
+function CommentForm({
+  formData,
+  setFormData,
+  handleSubmit,
+  disableSubmit,
++ handleFileInputChange,
+}) {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  return (
+    <div>
+      <label
+        htmlFor="content"
+        className="block text-sm font-medium text-gray-700"
+      >
+        Comment
+      </label>
+      <div className="mt-1">
+        <textarea
+          id="content"
+          name="content"
+          rows={5}
+          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          value={formData.content}
+          onChange={handleChange}
+        />
+      </div>
+      <div className="mt-2" />
++     <input type="file" onChange={handleFileInputChange}></input>
+      <button
+        type="button"
+        onClick={handleSubmit}
+        className={`inline-flex items-center px-4 py-2 text-base font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+          disableSubmit && "cursor-not-allowed"
+        }`}
+      >
+        Add New Comment
+      </button>
+    </div>
+  );
+}
+
+/* same as before */
+
+function TopicPage() {
+
+/* same as before */
+
++  async function handleFileInputChange(e) {
++    const file = e.target.files[0];
++    const result = await Storage.put(file.name, file);
++    console.log("upload result = ", result);
++    const { key } = result;
++    setFormData({ ...formData, image: key });
++  }
+
+  const disableSubmit = createInProgress || formData.content.length === 0;
+
+  return (
+    <div>
+      <Head>
+        <title>Amplify Forum</title>
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text></svg>"
+        />
+      </Head>
+
+      <div className="container mx-auto">
+        <main className="bg-white">
+          <div className="px-4 py-16 mx-auto max-w-7xl sm:py-24 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <p className="mt-1 text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+                {!topic && "Loading..."}
+                {topic && topic.title}
+              </p>
+            </div>
+            {topic && (
+              <>
+                <div className="mt-10" />
+                <CommentList commentsItems={comments} />
+                <div className="mt-20" />
+                <CommentForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  disableSubmit={disableSubmit}
+                  handleSubmit={createNewComment}
++                 handleFileInputChange={handleFileInputChange}
+                />
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+```
+
+### Update GraphQL schema
+
+We need to add `image` field in `Comment` model
+Let's update **amplify/backend/api/amplifyforum/schema.graphql**
+
+```diff
+type Comment
+  @model
+  @key(name: "topicComments", fields: ["topicId", "content"])
+  @auth(
+    rules: [
+      { allow: owner }
+      {
+        allow: groups
+        groups: ["Moderator"]
+        operations: [read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  topicId: ID!
+  content: String!
+  topic: Topic @connection(fields: ["topicId"])
+  image: String
+}
+```
+
+apply change with `amplify push --y`
+
+```sh
+amplify push --y
+```
+
+### Getting and displaying saved file
+
+We will use `AmplifyS3Image` ui component to display image. Let's update **pages/topic/[id].js**
+
+> [Document on AmplifyS3Image UI Component](https://docs.amplify.aws/ui/storage/s3-image/q/framework/react)
+
+```diff
++ import { AmplifyS3Image } from "@aws-amplify/ui-react";
+
+function CommentList({ commentsItems }) {
+  if (commentsItems.length === 0) {
+    return (
+      <div className="flow-root">
+        <div className="text-center">
+          <p className="max-w-xl mx-auto mt-5 text-xl text-gray-500">
+            등록된 글이 없습니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flow-root">
+      <ul className="-mb-8">
+        {commentsItems.map((commentItem, commentItemIdx) => (
+          <li key={commentItem.id}>
+            <div className="relative pb-8">
+              {commentItemIdx !== commentItem.length - 1 ? (
+                <span
+                  className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <div className="relative flex items-start space-x-3">
+                <>
+                  <div className="relative">
+                    <UserCircleIcon
+                      className="items-center justify-center w-10 h-10 text-gray-500"
+                      aria-hidden="true"
+                    />
+
+                    <span className="absolute -bottom-0.5 -right-1 bg-white rounded-tl px-0.5 py-px">
+                      <ChatAltIcon
+                        className="w-5 h-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div>
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-900">
+                          {commentItem.owner}
+                          <span className="float-right">
+                            <DeleteCommentButton comment={commentItem} />
+                          </span>
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-sm text-gray-500">
+                        Commented at {commentItem.createdAt}
+                      </p>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-700">
+                      <p>{commentItem.content}</p>
+                    </div>
++                   <div className="mt-2">
++                     <AmplifyS3Image imgKey={commentItem.image} />
++                   </div>
+                  </div>
+                </>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+```
+
+### Deleting a file
+
+**TODO**
 
 ## Local mocking
 
